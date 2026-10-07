@@ -13,18 +13,21 @@
 scripts/test.sh           scripts/test.ps1          PR → CI (windows-latest)
   clang 编译检查 C 内核      native 构建 + 全量          build-test 作业：
   node 脚本语法检查          xUnit 测试 + TRX           构建 + 测试 + 发布产物
+       │                        │                  （纯文档变更 → 快速通道，跳过构建）
        │                        │                        │
        └────── pre-push 钩子（推送前强制执行本机可跑的全部检查）┘
+       └────── pre-push 钩子（直推 main 仅限文档：代码直推被拦截）┘
                                                         │
-                                          main 分支保护：只有 CI 通过的 PR 才能合入
+                                          main 分支保护：代码必须走 CI 通过的 PR
+                                          文档变更可直接推送（管理员放行 + 钩子核对）
 ```
 
 | 层 | 在哪运行 | 检查内容 | 失败后果 |
 |---|---|---|---|
 | 1. 本机快速门禁 | macOS 开发机 | `scripts/test.sh`：C 内核 clang 编译检查、脚本语法 | `git push` 被阻止 |
 | 2. 本机全量门禁 | Windows 构建机 | `scripts/test.ps1`：native 构建 + xUnit 全量（可选覆盖率） | `git push` 被阻止 |
-| 3. CI 验证 | GitHub Actions | 与全量门禁相同 + 发布产物 + TRX/覆盖率报告上传 | check 失败，PR 无法合入 |
-| 4. main 分支保护 | GitHub 服务端 | `build-test` check 必须通过；直接 push `main` 被拒绝 | 未经测试的代码进不了 `main` |
+| 3. CI 验证 | GitHub Actions | 与全量门禁相同 + 发布产物 + TRX/覆盖率报告上传；纯文档变更走快速通道（秒级绿） | check 失败，PR 无法合入 |
+| 4. main 分支保护 | GitHub 服务端 + pre-push 钩子 | 代码：必须 PR 且 `build-test` 通过；文档（`*.md`、`docs/`、`LICENSE`）：核对无误后可直接推送 | 未经测试的代码进不了 `main` |
 
 工作流按 PORTING-PLAN 的约定：**macOS 写码 + Windows 构建调试 + CI 把关**。macOS 上没有 .NET/WPF 工具链是常态，所以第 1 层只跑可移植部分，完整验证由 Windows 机器与 CI 承担。
 
@@ -57,7 +60,9 @@ scripts/test.sh           scripts/test.ps1          PR → CI (windows-latest)
 
 测试报告落在 `src/Compositor.Tests/TestResults/`（已 gitignore）。
 
-## 重要节点完成后的推送流程
+## 推送流程
+
+### 代码类改动（`src/`、`scripts/`、`.github/`、解决方案文件）——必须走 PR + CI
 
 每个里程碑 / 功能节点收尾时按此清单执行：
 
@@ -66,7 +71,8 @@ scripts/test.sh           scripts/test.ps1          PR → CI (windows-latest)
 3. **推功能分支并开 PR**：
    ```sh
    git switch -c <topic>
-   git commit -am "<conventional message>"
+   git add <明确列出文件>            # 避免把未完成改动卷进提交
+   git commit -m "<conventional message>"
    git push -u origin <topic>      # pre-push 钩子在此强制执行
    gh pr create --fill
    ```
@@ -74,10 +80,15 @@ scripts/test.sh           scripts/test.ps1          PR → CI (windows-latest)
 5. **合入**：`gh pr merge --squash --delete-branch`。main 分支保护要求 `build-test` check 通过才能合并——这一步就是"测试通过才进仓库"的服务端保证。
 6. **（每里程碑一次）** 从 CI 产物下载 `Compositor-win-x64`，在 Windows 11 实机冒烟验证可安装包。
 
+### 文档类改动（`*.md`、`docs/`、`LICENSE`）——核对后直接推送
+
+1. 核对内容正确（CI 对纯文档变更只走快速通道，不做构建验证，正确性由人工把关）。
+2. `git push origin main`。pre-push 钩子仍会跑本机可移植检查，并确认改动确实只含文档；混入任何代码文件则被拦截，改走 PR 流程。
+
 ### 跳过与紧急绕过
 
-- 临时推送 WIP 分支：`git push --no-verify` 或 `COMPOSITOR_SKIP_TESTS=1 git push`（只应作用于**功能分支**；main 只能经 PR 合入，绕不过 CI）。
-- 紧急修复必须直推 main 时：临时关闭分支保护（`gh api -X DELETE repos/jz791357/CompositorForWin/branches/main/protection`），推完立即恢复（见下）。
+- 临时推送 WIP 分支：`git push --no-verify` 或 `COMPOSITOR_SKIP_TESTS=1 git push`（只应作用于**功能分支**；代码进 main 只能经 PR 合入）。
+- 紧急修复必须直推代码到 main 时：`COMPOSITOR_ALLOW_DIRECT=1 git push`（本地放行；服务端对管理员放行直推，但 CI 仍会在推送后运行并暴露问题）。事后应尽快补一个小 PR 说明原因。
 
 ### main 分支保护（服务端配置，已启用）
 
@@ -87,7 +98,7 @@ scripts/test.sh           scripts/test.ps1          PR → CI (windows-latest)
 cat <<'EOF' | gh api -X PUT repos/jz791357/CompositorForWin/branches/main/protection --input -
 {
   "required_status_checks": { "strict": true, "checks": [ { "context": "build-test" } ] },
-  "enforce_admins": true,
+  "enforce_admins": false,
   "required_pull_request_reviews": { "required_approving_review_count": 0 },
   "restrictions": null,
   "allow_force_pushes": false,
@@ -97,7 +108,7 @@ cat <<'EOF' | gh api -X PUT repos/jz791357/CompositorForWin/branches/main/protec
 EOF
 ```
 
-规则：必须走 PR；`build-test` check 必须通过且与 main 同步；对管理员同样生效（单人开发，0 个批准即可自合）。
+规则：**代码必须走 PR** 且 `build-test` check 通过且与 main 同步。**对管理员不启用强制的 PR 限制**（`enforce_admins: false`）——这是文档直推通道的前提；"管理员不直推代码"由 pre-push 钩子按改动路径本地拦截（单人开发，0 个批准即可自合）。若日后多人协作，改回 `enforce_admins: true` 并撤销文档直推通道。
 
 ## CI 产物
 

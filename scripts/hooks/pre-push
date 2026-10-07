@@ -4,7 +4,13 @@
 # macOS runs the compile-level gate (scripts/test.sh). CI re-verifies
 # everything on windows-latest after the push.
 #
+# Push policy (docs/TESTING.md): core code reaches main only through a PR
+# with a green build-test check. Documentation-only changes may be pushed
+# straight to main; this hook enforces the split locally — a direct push
+# to main carrying anything outside the docs set is rejected.
+#
 # Bypass for WIP pushes:  git push --no-verify   (or COMPOSITOR_SKIP_TESTS=1)
+# Emergency direct code push to main: COMPOSITOR_ALLOW_DIRECT=1 (see TESTING.md)
 #
 # Enabled per clone via core.hooksPath — run scripts/hooks/install.sh (.ps1).
 
@@ -16,10 +22,31 @@ case "$(uname -s)" in
     MINGW*|MSYS*|CYGWIN*)
         powershell.exe -NoProfile -ExecutionPolicy Bypass \
             -File "$repo/scripts/test.ps1" -Configuration Release
-        exit $?
+        rc=$?
         ;;
     *)
         sh "$repo/scripts/test.sh"
-        exit $?
+        rc=$?
         ;;
 esac
+[ "$rc" -ne 0 ] && exit "$rc"
+
+# Direct pushes to main may carry documentation only (*.md, docs/, LICENSE).
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ "$remote_ref" = "refs/heads/main" ] || continue
+    [ "$COMPOSITOR_ALLOW_DIRECT" = "1" ] && continue
+    case "$remote_sha" in
+        *[!0]*) ;;                # a real update of an existing main
+        *) continue ;;            # all-zero sha (creation/deletion): not judged here
+    esac
+    nondocs=$(git diff --name-only "$remote_sha" "$local_sha" -- \
+        | grep -vE '(^|/)[^/]*\.md$|^docs/|^LICENSE$' | grep -c .) || true
+    if [ "${nondocs:-0}" -gt 0 ]; then
+        echo "pre-push gate: direct push to main carries non-documentation changes." >&2
+        echo "Core code reaches main through a PR with a green build-test (docs/TESTING.md)." >&2
+        echo "Emergency override: COMPOSITOR_ALLOW_DIRECT=1 git push" >&2
+        exit 1
+    fi
+done
+
+exit 0
