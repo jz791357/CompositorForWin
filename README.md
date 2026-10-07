@@ -1,5 +1,7 @@
 # Compositor for Windows
 
+[![CI](https://github.com/jz791357/CompositorForWin/actions/workflows/ci.yml/badge.svg)](https://github.com/jz791357/CompositorForWin/actions/workflows/ci.yml)
+
 **Compositor** 的 Windows 原生移植版 —— 一个免费、开源、类 Photoshop 的图像编辑器与合成工具。
 
 > **源项目**：[robbietilton/Compositor](https://github.com/robbietilton/Compositor)
@@ -57,13 +59,27 @@
 
 ## 开发与构建
 
-> 需要 Windows 10 1809+ 与 .NET 10 SDK；CI 亦会在每次推送时构建。
+> 完整的测试与推送门禁流程见 [docs/TESTING.md](docs/TESTING.md)：本机门禁 + pre-push 钩子 + CI 验证 + main 分支保护，**测试全部通过前代码进不了 `main`**。
+
+每个 clone 一次性启用 pre-push 门禁：
+
+```sh
+./scripts/hooks/install.sh        # macOS
+.\scripts\hooks\install.ps1       # Windows
+```
+
+日常（需要 Windows 10 1809+ 与 .NET 10 SDK；macOS 开发机跑可移植子集）：
 
 ```powershell
-# 构建（M0 提供后）
-dotnet build CompositorForWin.sln
-dotnet test src/Compositor.Tests
+.\scripts\test.ps1                # 全量门禁：native 构建 + xUnit 测试
+.\scripts\build.ps1               # 测试通过后构建发布产物
 ```
+
+```sh
+./scripts/test.sh                 # macOS：C 内核编译检查等可移植门禁
+```
+
+重要节点（里程碑/功能）完成后：推分支 → PR → CI 绿 → squash 合入 main。
 
 ## 致谢与许可
 

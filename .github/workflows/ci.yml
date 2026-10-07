@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -27,10 +29,21 @@ jobs:
       - name: Build native kernels (msbuild)
         run: msbuild src/Compositor.Native/Compositor.Native.vcxproj /p:Configuration=Release /p:Platform=x64 /m /v:minimal
 
-      - name: Build & test
+      - name: Build & test (TRX + coverage)
         run: |
           dotnet build src/Compositor.Tests/Compositor.Tests.csproj -c Release
-          dotnet test src/Compositor.Tests/Compositor.Tests.csproj -c Release --no-build
+          dotnet test src/Compositor.Tests/Compositor.Tests.csproj -c Release --no-build --logger trx --collect:"XPlat Code Coverage"
+
+      - name: Upload test results & coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            src/Compositor.Tests/TestResults/**/*.trx
+            src/Compositor.Tests/TestResults/**/*.xml
+          retention-days: 14
+          if-no-files-found: warn
 
       - name: Publish app
         run: |
