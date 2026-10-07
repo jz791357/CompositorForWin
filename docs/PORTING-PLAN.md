@@ -1,6 +1,6 @@
 # Compositor Windows 移植计划
 
-> 版本：v1.0（2026-10-07）
+> 版本：v1.1（2026-10-07，补充第 5 项硬性要求：保持轻量）
 > 原项目：https://github.com/robbietilton/Compositor （MIT，Swift/macOS，当前 1.4.5，.comp 格式 v11）
 > 本文档是 Windows 版的唯一权威计划，开工后随里程碑推进更新状态。
 
@@ -8,14 +8,28 @@
 
 ## 1. 目标与原则
 
-把 Compositor 移植为 **Windows 原生桌面应用**，达成四个硬性要求：
+把 Compositor 移植为 **Windows 原生桌面应用**，达成五个硬性要求：
 
 1. **能力完全对等**：功能清单（README Features 全部条目）逐项对齐，包括 Photoshop 级图层系统、蒙版、混合模式、调整图层、图层效果、选区工具组、画笔引擎、Camera Raw、PSD/PSB 导入、AI 选择。
 2. **UI 完全保留**：同样的深色界面、布局（标签页条、工具头、画布、右侧图层面板、浮动面板）、交互（拖拽标签改数值 NumericScrub、右键菜单、拖放图层跨项目复制）。
 3. **项目结构保留**：C# 工程按 Swift 源码的 `Document / Rendering / UI / IO` 四层 1:1 映射，文件同名（`EditorSession.swift → EditorSession.cs`），使上游 diff 可按文件机械翻译。
-4. **快速跟随上游**：新仓库挂 `upstream` remote；每次上游发版按固定流程（§10）同步；**C 像素内核直接复用上游 .c 文件编译**，零翻译成本。
+4. **快速跟随上游**：新仓库挂 `upstream` remote；每次上游发版按固定流程（§8）同步；**C 像素内核直接复用上游 .c 文件编译**，零翻译成本。
+5. **保持轻量**：原版是单个原生 Swift 应用，零第三方运行时依赖、体积极小；Windows 版按同样的轻量工具定位约束自己——依赖最小化，安装包/启动/内存设预算（§1.1），禁止为图省事引入重型框架（Electron/WebView 壳、大而全的通用库）。
 
 **不变的契约**：`.comp` 格式 v11 双向完全兼容——macOS 版能打开 Windows 版保存的项目，反之亦然；外部写入 .comp 时画布实时刷新（AI agent 协作特性）同样保留。
+
+### 1.1 轻量化预算
+
+原版是单个原生 App，零第三方运行时依赖。Windows 版的对应约束（除注明外均指主程序，不含按需下载内容）：
+
+| 指标 | 预算 | 说明 |
+|---|---|---|
+| 安装包/磁盘占用 | ≤ 100 MB | 不含按需下载的 AI 模型（40–160 MB）；ONNX Runtime、LibRaw 等随包 DLL 计入预算，M4 若超限则把 ONNX Runtime 一并改为按需下载 |
+| 冷启动到可交互 | ≤ 2 s | CI 记录启动耗时，防持续回退 |
+| 空文档常驻内存 | ≤ 300 MB | 大文档内存随画布规模走、不另设上限（与原版一致），进性能基准抽样 |
+| NuGet/native 依赖 | 仅 §4 映射表列出的库 | 新增依赖须在本文档登记理由；同类选型取更轻者 |
+
+发布方式默认 **framework-dependent**（Velopack 首启引导安装 .NET 10 Desktop Runtime），M0 实测体积与首装体验后定稿；若改 self-contained 须重新核对预算（WPF 不支持 trimming，包体约 +100 MB）。
 
 ## 2. 已确认决策
 
@@ -31,6 +45,7 @@
 | 命名/图标 | 同名 Compositor，复用原版图标（PNG→ico） |
 | 菜单形态 | 窗口内经典菜单栏（Photoshop Windows 版式），Cmd→Ctrl 快捷键映射 |
 | M1 范围 | 画布缩放平移 / 图层、组、混合模式、不透明度 / 蒙版（绘制、启用、链接）/ 画笔、橡皮擦、移动 / 撤销重做 / .comp 新建打开保存 / PNG JPEG 导出 / 标尺参考线 |
+| 轻量化 | 第 5 项硬性要求：预算与依赖政策见 §1.1；发布方式默认 framework-dependent，M0 定稿 |
 
 ## 3. 新仓库结构
 
@@ -72,9 +87,9 @@ CompositorForWin/
 | Sparkle 自动更新 | Velopack（GitHub Releases 为源） | 支持增量更新，版本号 `1.4.5-win.1` 跟随上游 |
 | CryptoKit SHA | System.Security.Cryptography | 项目摘要/外部变更检测 |
 | UniformTypeIdentifiers | 自定义文件类型注册 | `.comp` 关联、Progid/图标注册表项 |
-| XCTest（13.9k 行） | xUnit 同名映射 | 格式与算法契约测试优先移植（见 §11） |
+| XCTest（13.9k 行） | xUnit 同名映射 | 格式与算法契约测试优先移植（见 §9） |
 
-**像素管线约定**：存储为 8 位 RGBA（PNG 直通 alpha），合成内部用预乘 alpha（与 CoreGraphics 一致），大文档（上限 3 亿源像素）走分块渲染（移植 TiledLayerRenderer + DownsampleCache）。像素格式、四舍五入方式以 C 内核和上游 Swift 实现为准，golden 文件校验（§11）。
+**像素管线约定**：存储为 8 位 RGBA（PNG 直通 alpha），合成内部用预乘 alpha（与 CoreGraphics 一致），大文档（上限 3 亿源像素）走分块渲染（移植 TiledLayerRenderer + DownsampleCache）。像素格式、四舍五入方式以 C 内核和上游 Swift 实现为准，golden 文件校验（§9）。
 
 ## 5. .comp 格式兼容（最高优先级契约）
 
@@ -150,6 +165,7 @@ CompositorForWin/
 - **契约测试优先**：上游 CompositorTests 中 ProjectStore/格式/混合模式/蒙版/调整等纯逻辑测试（约 60% 用例）同名移植到 xUnit，作为两版行为一致的证据。
 - **Golden 文件**：在 mac（本机若可构建原版）或手工生成一组 .comp 基准（含组/蒙版/混合/调整/效果/文字），Windows 版加载后导出 PNG 逐像素/逐哈希比对，容差为 0（C 内核路径）或记录已知差异（CoreImage/DirectWrite 路径）。
 - **性能门禁**：CI 中跑大画布合成基准，防性能回退。
+- **轻量化门禁**：CI 记录安装包体积、冷启动耗时与空文档内存，超出 §1.1 预算即失败。
 
 ## 10. 已知差异（会与 macOS 版不同，需接受）
 
