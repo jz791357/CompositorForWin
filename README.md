@@ -20,6 +20,7 @@
 - **UI 保留** —— 同样的深色界面、布局与交互习惯（Photoshop 风格快捷键，⌘→Ctrl）
 - **结构同构** —— C# 源码按原版 `Document / Rendering / UI / IO` 四层文件级 1:1 映射，便于跟随上游迭代
 - **文件互通** —— `.comp` 项目格式与 macOS 版双向完全兼容；外部工具（包括 AI agent）写入 `.comp` 时，打开的画布实时刷新
+- **轻量化** —— 像原版一样保持轻量：依赖最小化、小体积安装包、快速启动、空闲低内存（预算见 [docs/PORTING-PLAN.md](docs/PORTING-PLAN.md) §1.1）
 
 ## 技术栈
 
@@ -32,6 +33,7 @@
 | AI 选择 | ONNX Runtime + 开源分割模型（对象选择 / 主体选择 / 移除背景，对应 macOS 的 Vision 框架） |
 | RAW 开发 | LibRaw（对应 macOS 的 CIRAWFilter） |
 | 自动更新 | Velopack（GitHub Releases 为更新源，增量更新，对应原版 Sparkle） |
+| 发布/体积 | Framework-dependent 发布，Velopack 首启引导安装 .NET 10 Desktop Runtime；安装包 ≤ 100 MB（AI 模型按需下载，不计入） |
 | 测试 | xUnit（原版 XCTest 契约测试同名移植） |
 | CI | GitHub Actions（windows-latest：构建 + 测试） |
 
@@ -90,7 +92,7 @@
 
 # Compositor for Windows (English)
 
-A native Windows port of **Compositor**, the free and open-source Photoshop-style image editor by [Robbie Tilton](https://robbietilton.com) ([source](https://github.com/robbietilton/Compositor), MIT). The port aims for full feature parity, the same dark UI, a 1:1 source-structure mapping for fast upstream syncing, and bidirectional `.comp` file compatibility with the macOS original.
+A native Windows port of **Compositor**, the free and open-source Photoshop-style image editor by [Robbie Tilton](https://robbietilton.com) ([source](https://github.com/robbietilton/Compositor), MIT). The port aims for full feature parity, the same dark UI, a 1:1 source-structure mapping for fast upstream syncing, bidirectional `.comp` file compatibility with the macOS original, and a lightweight footprint like the original (minimal dependencies, installer ≤ 100 MB, fast startup).
 
 **Stack**: C# / .NET 10, WPF, ComputeSharp (D3D11 compute), the original C pixel kernels compiled natively, ONNX Runtime for AI selections, LibRaw for camera RAW, Velopack for updates, xUnit tests mirroring the upstream suite.
 
