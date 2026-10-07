@@ -81,15 +81,20 @@ scripts/test.sh           scripts/test.ps1          PR → CI (windows-latest)
 
 ### main 分支保护（服务端配置，已启用）
 
-等价于在仓库 Settings → Branches 配置：
+等价于在仓库 Settings → Branches 配置，可用以下命令随时恢复：
 
 ```sh
-gh api -X PUT repos/jz791357/CompositorForWin/branches/main/protection -f \
-  'required_status_checks[strict]=true' \
-  -f 'required_status_checks[checks][]=build-test' \
-  -f 'enforce_admins=true' \
-  -f 'required_pull_request_reviews[required_approving_review_count]=0' \
-  -F restrictions=null
+cat <<'EOF' | gh api -X PUT repos/jz791357/CompositorForWin/branches/main/protection --input -
+{
+  "required_status_checks": { "strict": true, "checks": [ { "context": "build-test" } ] },
+  "enforce_admins": true,
+  "required_pull_request_reviews": { "required_approving_review_count": 0 },
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "required_linear_history": true
+}
+EOF
 ```
 
 规则：必须走 PR；`build-test` check 必须通过且与 main 同步；对管理员同样生效（单人开发，0 个批准即可自合）。
