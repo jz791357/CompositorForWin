@@ -8,3 +8,4 @@ upstream/*
 .vs/
 .DS_Store
 TestResults/
+coverage/

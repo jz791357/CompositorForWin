@@ -1,0 +1,25 @@
+#!/bin/sh
+# pre-push gate: blocks `git push` unless the checks this machine can run
+# all pass. Windows runs the full suite (scripts/test.ps1: native + xUnit);
+# macOS runs the compile-level gate (scripts/test.sh). CI re-verifies
+# everything on windows-latest after the push.
+#
+# Bypass for WIP pushes:  git push --no-verify   (or COMPOSITOR_SKIP_TESTS=1)
+#
+# Enabled per clone via core.hooksPath — run scripts/hooks/install.sh (.ps1).
+
+[ "$COMPOSITOR_SKIP_TESTS" = "1" ] && { echo "pre-push gate: skipped (COMPOSITOR_SKIP_TESTS=1)"; exit 0; }
+
+repo=$(git rev-parse --show-toplevel) || exit 1
+
+case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*)
+        powershell.exe -NoProfile -ExecutionPolicy Bypass \
+            -File "$repo/scripts/test.ps1" -Configuration Release
+        exit $?
+        ;;
+    *)
+        sh "$repo/scripts/test.sh"
+        exit $?
+        ;;
+esac
