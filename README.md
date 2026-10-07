@@ -51,7 +51,7 @@
 
 | 里程碑 | 内容 | 状态 |
 |---|---|---|
-| M0 | 仓库骨架 / CI / C 内核 DLL / 应用外壳 | 🔨 筹备中 |
+| M0 | 仓库骨架 / CI / C 内核 DLL / 应用外壳 | ✅ 完成 |
 | M1 | 核心编辑器：画布、图层/组/混合模式/蒙版、画笔、移动工具、撤销、`.comp` 读写、PNG/JPEG 导出、标尺参考线 | ⏳ |
 | M2 | 选区工具组、自由变换、裁剪、文字/形状/渐变工具、仿制/修复/内容识别填充 | ⏳ |
 | M3 | 调整图层、图层效果、滤镜、Camera Raw、导出增强 | ⏳ |
@@ -98,4 +98,4 @@ A native Windows port of **Compositor**, the free and open-source Photoshop-styl
 
 **Known differences**: AI segmentation uses an open ONNX model instead of Apple Vision (equivalent features, not pixel-identical); text metrics via DirectWrite may differ slightly from CoreText; ±1/255 rounding differences in filters; Windows platform conventions (in-window menu bar, Ctrl shortcuts).
 
-**Status**: planning / M0. Roadmap: M1 core editor → M2 selections/transform/type → M3 adjustments/effects/Camera Raw → M4 PSD/RAW/AI. MIT licensed.
+**Status**: M0 shipped — repo skeleton, CI, the C pixel kernels compiled natively, and the dark WPF shell, all verified on Windows 11. Next: M1 core editor (canvas, layers/masks/blend modes, brush, `.comp` read/write). Roadmap: M1 → M2 selections/transform/type → M3 adjustments/effects/Camera Raw → M4 PSD/RAW/AI. MIT licensed.
