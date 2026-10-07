@@ -29,7 +29,7 @@
 | 空文档常驻内存 | ≤ 300 MB | 大文档内存随画布规模走、不另设上限（与原版一致），进性能基准抽样 |
 | NuGet/native 依赖 | 仅 §4 映射表列出的库 | 新增依赖须在本文档登记理由；同类选型取更轻者 |
 
-发布方式默认 **framework-dependent**（Velopack 首启引导安装 .NET 10 Desktop Runtime），M0 实测体积与首装体验后定稿；若改 self-contained 须重新核对预算（WPF 不支持 trimming，包体约 +100 MB）。
+发布方式默认 **framework-dependent**（Velopack 首启引导安装 .NET 10 Desktop Runtime）；M0 实测发布产物 **0.38 MB**（框架依赖、含原生 DLL），远低于预算，维持默认。若改 self-contained 须重新核对预算（WPF 不支持 trimming，包体约 +100 MB）。
 
 ## 2. 已确认决策
 
@@ -110,11 +110,11 @@ CompositorForWin/
 
 > 工作量按 AI 辅助开发会话估算；每阶段结束产出可安装包 + 更新 PORTING-MAP 状态。
 
-### M0 骨架（1 个会话）
-- [ ] 仓库/解决方案/四层目录/CI（windows-latest build+test）
-- [ ] Compositor.Native：上游 .c 编译通过（dispatch shim）+ 冒烟测试
-- [ ] 图标（1024px PNG→多尺寸 ico）、窗口外壳（自定义深色主题框架）、菜单栏骨架
-- [ ] PORTING-MAP.md 全量文件清单生成；SYNC-UPSTREAM.md 流程成文
+### M0 骨架（1 个会话）— ✅ 完成（2026-10-07，CI 绿，产物 0.38 MB）
+- [x] 仓库/解决方案/四层目录/CI（windows-latest build+test）
+- [x] Compositor.Native：上游 .c 编译通过（blocks→串行补丁，见 scripts/sync-native.mjs）+ 6 个契约冒烟测试通过
+- [x] 图标（1024px PNG→多尺寸 ico）、窗口外壳（自定义深色主题框架）、完整菜单树
+- [x] PORTING-MAP.md 全量文件清单生成（216 条）；SYNC-UPSTREAM.md 流程成文
 - 验收：CI 绿；空窗口带菜单在 Windows 11 运行。
 
 ### M1 核心编辑器（3–6 个会话）
