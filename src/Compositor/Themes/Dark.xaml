@@ -139,7 +139,7 @@
                             <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource Brush.Accent}" />
                             <Setter Property="Foreground" Value="{StaticResource Brush.TextPrimary}" />
                         </Trigger>
-                        <Trigger Property="IsHighlighted" Value="True">
+                        <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Root" Property="Background" Value="{StaticResource Brush.ControlHover}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
