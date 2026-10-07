@@ -1,0 +1,10 @@
+bin/
+obj/
+out/
+publish/
+upstream/*
+!upstream/README.md
+*.user
+.vs/
+.DS_Store
+TestResults/

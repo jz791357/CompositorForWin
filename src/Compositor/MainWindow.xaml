@@ -1,0 +1,139 @@
+<Window x:Class="Compositor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Compositor" Width="1180" Height="780"
+        MinWidth="720" MinHeight="480"
+        WindowStartupLocation="CenterScreen">
+    <!-- Maps to upstream ContentView.swift / ProjectWorkspace: menu bar, project tab
+         strip, canvas viewport and the Layers panel docked right (252 px default,
+         remembered once resizable). M0 shows the shell; M1 fills the canvas. -->
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="New Canvas…" InputGestureText="Ctrl+N" IsEnabled="False" />
+                <MenuItem Header="Open Project…" InputGestureText="Ctrl+O" IsEnabled="False" />
+                <MenuItem Header="Open Recent" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Import Images…" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Save" InputGestureText="Ctrl+S" IsEnabled="False" />
+                <MenuItem Header="Save As…" InputGestureText="Ctrl+Shift+S" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Export PNG…" IsEnabled="False" />
+                <MenuItem Header="Export JPEG…" InputGestureText="Ctrl+Shift+Alt+S" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Close Project" InputGestureText="Ctrl+W" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Exit" InputGestureText="Alt+F4" Click="Exit_Click" />
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="Undo" InputGestureText="Ctrl+Z" IsEnabled="False" />
+                <MenuItem Header="Redo" InputGestureText="Ctrl+Shift+Z" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Cut" InputGestureText="Ctrl+X" IsEnabled="False" />
+                <MenuItem Header="Copy" InputGestureText="Ctrl+C" IsEnabled="False" />
+                <MenuItem Header="Copy Merged" InputGestureText="Ctrl+Shift+C" IsEnabled="False" />
+                <MenuItem Header="Paste" InputGestureText="Ctrl+V" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Keyboard Shortcuts…" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Fill with Foreground Color" InputGestureText="Alt+Delete" IsEnabled="False" />
+                <MenuItem Header="Fill with Background Color" InputGestureText="Ctrl+Delete" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Clear Selection Pixels" IsEnabled="False" />
+                <MenuItem Header="Content-Aware Fill…" InputGestureText="Shift+Delete" IsEnabled="False" />
+            </MenuItem>
+            <MenuItem Header="_Image">
+                <MenuItem Header="Adjustments…" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Canvas Size…" InputGestureText="Ctrl+Alt+C" IsEnabled="False" />
+                <MenuItem Header="Image Size…" InputGestureText="Ctrl+Alt+I" IsEnabled="False" />
+                <MenuItem Header="Trim…" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Flip Canvas Horizontal" IsEnabled="False" />
+                <MenuItem Header="Flip Canvas Vertical" IsEnabled="False" />
+            </MenuItem>
+            <MenuItem Header="_Layer">
+                <MenuItem Header="New Adjustment Layer" IsEnabled="False" />
+                <MenuItem Header="Edit Adjustment…" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Free Transform" InputGestureText="Ctrl+T" IsEnabled="False" />
+                <MenuItem Header="Duplicate Layer" InputGestureText="Ctrl+J" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Group Selected Layers" InputGestureText="Ctrl+G" IsEnabled="False" />
+                <MenuItem Header="Ungroup Layers" InputGestureText="Ctrl+Shift+G" IsEnabled="False" />
+                <MenuItem Header="Move Out of Folder" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="New Blank Layer" InputGestureText="Ctrl+Shift+N" IsEnabled="False" />
+                <MenuItem Header="Rename Layer…" IsEnabled="False" />
+                <MenuItem Header="Move Layer Up" InputGestureText="Ctrl+]" IsEnabled="False" />
+                <MenuItem Header="Move Layer Down" InputGestureText="Ctrl+[" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Merge Down" InputGestureText="Ctrl+E" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Flip Layer Horizontal" IsEnabled="False" />
+                <MenuItem Header="Flip Layer Vertical" IsEnabled="False" />
+            </MenuItem>
+            <MenuItem Header="_Select">
+                <MenuItem Header="All" InputGestureText="Ctrl+A" IsEnabled="False" />
+                <MenuItem Header="Deselect" InputGestureText="Ctrl+D" IsEnabled="False" />
+                <MenuItem Header="Inverse" InputGestureText="Ctrl+Shift+I" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Layer's Pixels" IsEnabled="False" />
+                <MenuItem Header="Subject" InputGestureText="Ctrl+Alt+A" IsEnabled="False" />
+                <MenuItem Header="Color Range…" IsEnabled="False" />
+                <MenuItem Header="Mask's Black Areas" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Expand…" IsEnabled="False" />
+                <MenuItem Header="Contract…" IsEnabled="False" />
+                <MenuItem Header="Feather…" IsEnabled="False" />
+            </MenuItem>
+            <MenuItem Header="F_ilter" IsEnabled="False" />
+            <MenuItem Header="_View">
+                <MenuItem Header="Fit Canvas" IsEnabled="False" />
+                <MenuItem Header="Actual Pixels" IsEnabled="False" />
+                <MenuItem Header="Zoom In" IsEnabled="False" />
+                <MenuItem Header="Zoom Out" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Show" IsEnabled="False" />
+                <MenuItem Header="Grid Settings…" IsEnabled="False" />
+                <MenuItem Header="Snap To" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="Clear Guides" IsEnabled="False" />
+            </MenuItem>
+            <MenuItem Header="_Window" IsEnabled="False" />
+            <MenuItem Header="_Help">
+                <MenuItem Header="Check for Updates…" Click="CheckForUpdates_Click" />
+                <Separator />
+                <MenuItem Header="About Compositor" Click="About_Click" />
+            </MenuItem>
+        </Menu>
+
+        <!-- Project tabs (upstream ProjectTabs.swift) -->
+        <Border DockPanel.Dock="Top" Background="{StaticResource Brush.Chrome}"
+                BorderBrush="{StaticResource Brush.Divider}" BorderThickness="0,0,0,1" Padding="8,0,8,0">
+            <TabControl Background="Transparent" BorderThickness="0">
+                <TabItem Header="Untitled" />
+            </TabControl>
+        </Border>
+
+        <!-- Layers panel (upstream LayersPanel.swift / NativeLayerList.swift) -->
+        <Border DockPanel.Dock="Right" Width="252" Background="{StaticResource Brush.Panel}"
+                BorderBrush="{StaticResource Brush.Divider}" BorderThickness="1,0,0,0">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="Layers" FontWeight="SemiBold" Margin="12,10,12,8"
+                           Foreground="{StaticResource Brush.TextPrimary}" />
+                <Separator DockPanel.Dock="Top" Background="{StaticResource Brush.Divider}" Height="1" Margin="0,0" />
+                <TextBlock Text="Layers arrive in M1" Foreground="{StaticResource Brush.TextSecondary}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+
+        <!-- Canvas viewport (upstream EditorCanvas.swift / GPUCanvas.swift) -->
+        <Border Background="#FF262626">
+            <TextBlock Text="Compositor for Windows — M0 shell. The canvas opens projects in M1."
+                       Foreground="{StaticResource Brush.TextSecondary}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+    </DockPanel>
+</Window>
