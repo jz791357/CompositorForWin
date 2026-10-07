@@ -43,7 +43,7 @@ jobs:
             src/Compositor.Tests/TestResults/**/*.trx
             src/Compositor.Tests/TestResults/**/*.xml
           retention-days: 14
-          if-no-files-found: info
+          if-no-files-found: warn
 
       - name: Publish app
         run: |
