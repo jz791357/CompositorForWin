@@ -81,7 +81,7 @@
 ./scripts/test.sh                 # macOS：C 内核编译检查等可移植门禁
 ```
 
-重要节点（里程碑/功能）完成后：推分支 → PR → CI 绿 → squash 合入 main。
+重要节点（里程碑/功能）完成后：推分支 → PR → CI 绿 → squash 合入 main。文档类改动（`*.md`、`docs/`、`LICENSE`）核对无误后可直接推送 main（CI 走快速通道）。
 
 ## 致谢与许可
 
