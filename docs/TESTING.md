@@ -124,3 +124,5 @@ EOF
 - 上游 `CompositorTests/` 的纯逻辑用例（格式、混合模式、蒙版、调整等约 60%）**同名移植**到 `src/Compositor.Tests/`，作为两版行为一致的契约证据。
 - 每个里程碑落地功能时同步移植/新增对应测试——没有测试的功能不算完成（M0 的 `NativeKernelTests.cs` 即范例：只断言上游头文件承诺的契约）。
 - golden 文件比对与性能门禁按 PORTING-PLAN §9 在 M1 起接入本流程。
+
+> 推送策略：代码改动必须走 PR + CI（`build-test` 通过）；文档改动核对后可直接推送 main。
