@@ -4,6 +4,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Compositor", "src\Compositor\Compositor.csproj", "{E5C3B2A1-8D4F-4B7A-A3C9-6E1F2A3B4C5D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Compositor.Core", "src\Compositor.Core\Compositor.Core.csproj", "{B7E1D0A2-4F6B-4C8D-AE3F-8A0B1C2D3E4F}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Compositor.Native", "src\Compositor.Native\Compositor.Native.vcxproj", "{D4B2A1E0-3C5F-4A6B-9D2E-7F8A9B0C1D2E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Compositor.Tests", "src\Compositor.Tests\Compositor.Tests.csproj", "{F6D4C3B2-9E5A-4C8B-B4DA-7F2A3B4C5D6E}"
@@ -15,8 +17,12 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{E5C3B2A1-8D4F-4B7A-A3C9-6E1F2A3B4C5D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B7E1D0A2-4F6B-4C8D-AE3F-8A0B1C2D3E4F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B7E1D0A2-4F6B-4C8D-AE3F-8A0B1C2D3E4F}.Debug|x64.Build.0 = Debug|Any CPU
 		{E5C3B2A1-8D4F-4B7A-A3C9-6E1F2A3B4C5D}.Debug|x64.Build.0 = Debug|Any CPU
 		{E5C3B2A1-8D4F-4B7A-A3C9-6E1F2A3B4C5D}.Release|x64.ActiveCfg = Release|Any CPU
+		{B7E1D0A2-4F6B-4C8D-AE3F-8A0B1C2D3E4F}.Release|x64.ActiveCfg = Release|Any CPU
+		{B7E1D0A2-4F6B-4C8D-AE3F-8A0B1C2D3E4F}.Release|x64.Build.0 = Release|Any CPU
 		{E5C3B2A1-8D4F-4B7A-A3C9-6E1F2A3B4C5D}.Release|x64.Build.0 = Release|Any CPU
 		{D4B2A1E0-3C5F-4A6B-9D2E-7F8A9B0C1D2E}.Debug|x64.ActiveCfg = Debug|x64
 		{D4B2A1E0-3C5F-4A6B-9D2E-7F8A9B0C1D2E}.Debug|x64.Build.0 = Debug|x64
