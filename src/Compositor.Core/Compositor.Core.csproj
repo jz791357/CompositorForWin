@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Platform-neutral heart of the port: the Document and IO layers (upstream
+       Compositor/Document and Compositor/IO) plus the native-kernel bindings, exactly
+       as the macOS app carries them in its single target. A library here is the .NET
+       translation of upstream's @testable-import test setup: the WPF exe and the test
+       suite both reference it, and it runs on any OS for fast local logic tests. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Compositor</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>Compositor.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>

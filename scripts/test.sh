@@ -60,4 +60,16 @@ if command -v node >/dev/null 2>&1; then
     echo "node scripts: OK"
 fi
 
+# The .NET logic suite (Compositor.Core + tests) is portable since M1.1: run it
+# whenever a dotnet SDK is installed (~/.dotnet or PATH).
+dotnet_bin=$(command -v dotnet || true)
+[ -z "$dotnet_bin" ] && [ -x "$HOME/.dotnet/dotnet" ] && dotnet_bin="$HOME/.dotnet/dotnet"
+if [ -n "$dotnet_bin" ]; then
+    echo "== running .NET logic tests ($dotnet_bin) =="
+    "$dotnet_bin" test "$repo/src/Compositor.Tests/Compositor.Tests.csproj" -c Release
+    echo "dotnet tests: OK"
+else
+    echo "note: dotnet SDK not found — skipped .NET tests (install: curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 10.0)"
+fi
+
 echo "macOS gate passed (full suite runs on Windows / CI)."
