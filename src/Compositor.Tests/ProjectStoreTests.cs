@@ -314,7 +314,9 @@ public class ProjectStoreTests : IDisposable
         var package = NewPackage(Manifest(11, [Layer(id, imageFile: PngName(id))]));
         File.WriteAllBytes(Path.Combine(package, "images", PngName(id)), Png.Gray1x1());
         var first = ProjectDigest.Compute(package);
-        File.SetLastWriteTimeUtc(Path.Combine(package, "images"), DateTime.UtcNow);   // metadata-only touch
+        // Metadata-only touch (a file, not a directory: setting a directory's write time
+        // is denied on some Windows configurations).
+        File.SetLastWriteTimeUtc(Path.Combine(package, "manifest.json"), DateTime.UtcNow);
         Assert.Equal(first, ProjectDigest.Compute(package));
         File.WriteAllBytes(Path.Combine(package, "images", PngName(id)), Png.Rgba1x1());  // different asset size
         Assert.NotEqual(first, ProjectDigest.Compute(package));
