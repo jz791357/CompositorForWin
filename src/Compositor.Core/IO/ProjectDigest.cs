@@ -22,7 +22,8 @@ public readonly struct ProjectDigest : IEquatable<ProjectDigest>
         stream.Write(manifest);
         var images = Path.Combine(path, "images");
         var names = Directory.Exists(images)
-            ? Directory.GetFiles(images).Select(Path.GetFileName).Order(StringComparer.Ordinal).ToArray()
+            ? Directory.GetFiles(images).Select(Path.GetFileName).Where(n => n is not null)
+                .Order(StringComparer.Ordinal).ToArray()
             : [];
         foreach (var name in names)
         {

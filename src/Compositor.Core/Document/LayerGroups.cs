@@ -10,6 +10,7 @@ public static class LayerHierarchy
 
     public static List<Entry> Entries(IReadOnlyList<ProjectLayerRecord> layers, bool topFirst = false, HashSet<Guid>? collapsed = null)
     {
+        // Null key = root level (upstream groups by optional parentID the same way).
         var children = new Dictionary<Guid?, List<ProjectLayerRecord>>();
         List<ProjectLayerRecord> roots = [];
         foreach (var layer in layers)
