@@ -30,7 +30,7 @@ public sealed record ProjectManifest
     public CanvasGuide[]? Guides { get; init; }
 }
 
-public sealed record ProjectLayerRecord
+public sealed record ProjectLayerRecord : Compositor.Document.ILayerRecordView
 {
     public required Guid Id { get; init; }
     public required string Name { get; init; }
@@ -56,6 +56,9 @@ public sealed record ProjectLayerRecord
     public LayerTextStyle? Text { get; init; }
 
     public double OpacityOrOne => Opacity ?? 1;
+
+    // The runtime view of the optional group flag (the runtime layer uses a plain bool).
+    bool Compositor.Document.ILayerRecordView.IsGroup => IsGroup == true;
 }
 
 /// A project's persisted state (upstream ProjectSnapshot).
