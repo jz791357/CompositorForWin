@@ -322,6 +322,133 @@ public class ProjectStoreTests : IDisposable
         Assert.NotEqual(first, ProjectDigest.Compute(package));
     }
 
+    // --- save / load round-trips ---
+
+    private static ImportedImage RgbaAsset(int width, int height)
+    {
+        var pixels = new byte[width * height * 4];
+        for (var i = 0; i < width * height; i++)
+        {
+            pixels[i * 4] = (byte)(i * 3 % 256);
+            pixels[i * 4 + 1] = (byte)(i * 5 % 256);
+            pixels[i * 4 + 2] = (byte)(i * 7 % 256);
+            pixels[i * 4 + 3] = i % 3 == 0 ? (byte)0 : (byte)(128 + i % 128);
+        }
+        return new ImportedImage
+        {
+            Width = width, Height = height, Kind = PngPixelKind.Rgba8,
+            Pixels = pixels, Thumbnail = PngCodec.Thumbnail(width, height, pixels), Name = "Layer",
+        };
+    }
+
+    private static ImportedImage GrayAsset(int width, int height, byte value)
+    {
+        var pixels = new byte[width * height];
+        Array.Fill(pixels, value);
+        return new ImportedImage
+        {
+            Width = width, Height = height, Kind = PngPixelKind.Gray8,
+            Pixels = pixels, Thumbnail = [], Name = "Layer",
+        };
+    }
+
+    [Fact]
+    public void SaveLoad_RoundTripsEverything()
+    {
+        var id = Guid.NewGuid();
+        var group = Guid.NewGuid();
+        var maskId = Guid.NewGuid();
+        var manifest = Manifest(11,
+        [
+            Layer(isGroup: true, id: group),
+            Layer(id: id, parentID: group, imageFile: PngName(id),
+                  maskFile: MaskName(id), opacity: 0.75, blendMode: LayerBlendMode.SoftLight),
+        ]) with { ActiveLayerID = id, Guides = [new CanvasGuide(Guid.NewGuid(), CanvasGuideAxis.Horizontal, 33.5)] };
+        var snapshot = new ProjectSnapshot
+        {
+            Manifest = manifest,
+            Images = new() { [id] = RgbaAsset(21, 13) },
+            Masks = new() { [id] = GrayAsset(21, 13, 200) },
+        };
+
+        var package = NewPackage();
+        ProjectStore.Save(snapshot, package);
+        var back = ProjectStore.Load(package);
+
+        var expectedJson = JsonSerializer.Serialize(manifest, ProjectStore.Json);
+        var actualJson = JsonSerializer.Serialize(back.Manifest, ProjectStore.Json);
+        Assert.Equal(expectedJson, actualJson);                       // every field survives
+        Assert.Equal(snapshot.Images[id].Pixels, back.Images[id].Pixels);
+        Assert.Equal(snapshot.Masks[id].Pixels, back.Masks[id].Pixels);
+        Assert.Equal(PngPixelKind.Gray8, back.Masks[id].Kind);
+        Assert.NotEmpty(back.Images[id].Thumbnail);
+        // The macOS-written package shape: manifest at the root, assets under images/.
+        Assert.True(File.Exists(Path.Combine(package, "manifest.json")));
+        Assert.True(File.Exists(Path.Combine(package, "images", PngName(id))));
+        Assert.True(File.Exists(Path.Combine(package, "images", MaskName(id))));
+    }
+
+    [Fact]
+    public void Save_ReplacesExistingPackageWithoutDebris()
+    {
+        var id = Guid.NewGuid();
+        var package = NewPackage(Manifest(11, [Layer(id, imageFile: PngName(id))]));
+        ProjectStore.Save(new ProjectSnapshot
+        {
+            Manifest = Manifest(11, [Layer(id, imageFile: PngName(id))]),
+            Images = new() { [id] = RgbaAsset(9, 9) },
+        }, package);
+        var first = File.ReadAllBytes(Path.Combine(package, "images", PngName(id)));
+
+        var updated = new ProjectSnapshot
+        {
+            Manifest = Manifest(11, [Layer(id, imageFile: PngName(id))]),
+            Images = new() { [id] = RgbaAsset(11, 7) },
+        };
+        ProjectStore.Save(updated, package);
+
+        var second = File.ReadAllBytes(Path.Combine(package, "images", PngName(id)));
+        Assert.NotEqual(first, second);
+        Assert.Equal(updated.Images[id].Pixels, ProjectStore.Load(package).Images[id].Pixels);
+        Assert.Empty(Directory.GetDirectories(_root, "*.tmp-save"));
+        Assert.Empty(Directory.GetDirectories(_root, "*.old-save"));
+    }
+
+    [Fact]
+    public void Save_RejectsColoredPixelsWhereAMaskBelongs()
+    {
+        var id = Guid.NewGuid();
+        var snapshot = new ProjectSnapshot
+        {
+            Manifest = Manifest(11, [Layer(id, imageFile: PngName(id), maskFile: MaskName(id))]),
+            Images = new() { [id] = RgbaAsset(4, 4) },
+            Masks = new() { [id] = RgbaAsset(4, 4) },   // RGBA where Gray8 is required
+        };
+        Assert.Equal(ProjectError.Invalid, Assert.Throws<ProjectException>(() => ProjectStore.Save(snapshot, NewPackage())).Error);
+    }
+
+    [Fact]
+    public void Save_MissingAssetFailsBeforeReplacing()
+    {
+        var id = Guid.NewGuid();
+        var package = NewPackage(Manifest(11, [Layer(id, imageFile: PngName(id))]));
+        ProjectStore.Save(new ProjectSnapshot
+        {
+            Manifest = Manifest(11, [Layer(id, imageFile: PngName(id))]),
+            Images = new() { [id] = RgbaAsset(4, 4) },
+        }, package);
+        var before = ProjectDigest.Compute(package);
+
+        // A manifest naming an asset the snapshot does not carry fails with MissingImage,
+        // and the previously saved package is untouched.
+        var danglingID = Guid.NewGuid();
+        var dangling = Manifest(11, [Layer(id: danglingID, imageFile: PngName(danglingID))]);
+        Assert.Equal(ProjectError.MissingImage,
+            Assert.Throws<ProjectException>(() => ProjectStore.Save(
+                new ProjectSnapshot { Manifest = dangling, Images = [] }, package)).Error);
+        Assert.Equal(before, ProjectDigest.Compute(package));
+    }
+
     public void Dispose()
     {
         try { Directory.Delete(_root, recursive: true); } catch { /* temp cleanup is best-effort */ }
