@@ -58,8 +58,7 @@ public sealed record ProjectLayerRecord
     public double OpacityOrOne => Opacity ?? 1;
 }
 
-/// A project's persisted state (upstream ProjectSnapshot). M1.1 keeps the encoded PNG
-/// bytes plus header facts; M1.2's decoder turns them into rasters and thumbnails.
+/// A project's persisted state (upstream ProjectSnapshot).
 public sealed class ProjectSnapshot
 {
     public required ProjectManifest Manifest { get; init; }
@@ -67,14 +66,15 @@ public sealed class ProjectSnapshot
     public Dictionary<Guid, ImportedImage> Masks { get; init; } = [];
 }
 
-/// One image asset (upstream ImportedImage). `Encoded` holds the source PNG until the
-/// M1.2 decoder replaces Pixels/Thumbnail with real data.
+/// One image asset (upstream ImportedImage). `Pixels` are straight RGBA8 for images
+/// (4 bytes/pixel) and Gray8 for masks (1 byte/pixel); `Thumbnail` is ≤96px RGBA8.
 public sealed class ImportedImage
 {
     public required int Width { get; init; }
     public required int Height { get; init; }
-    public required byte[] Encoded { get; init; }
+    public required PngPixelKind Kind { get; init; }
+    public required byte[] Pixels { get; init; }
+    public required byte[] Thumbnail { get; init; }
     public required string Name { get; init; }
-    public byte[]? Pixels { get; init; }
-    public byte[]? Thumbnail { get; init; }
+    public byte[]? Encoded { get; init; }
 }

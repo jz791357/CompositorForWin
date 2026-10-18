@@ -68,17 +68,113 @@ public static class ProjectStore
         return new ProjectSnapshot { Manifest = manifest, Images = images, Masks = masks };
     }
 
+    /// Writes a package through a staging directory and swaps it in atomically — the
+    /// Windows translation of upstream's coordinated `.atomic` FileWrapper write. A
+    /// crash mid-save leaves the previous project in place (and a `.old-save` sibling
+    /// only if it happened between the two moves).
+    public static void Save(ProjectSnapshot snapshot, string path)
+    {
+        var manifest = snapshot.Manifest;
+        Validate(manifest);
+
+        var encoded = new Dictionary<string, byte[]>();
+        long pixels = 0, maskPixels = 0;
+        foreach (var layer in manifest.Layers)
+        {
+            foreach (var isMask in new[] { false, true })
+            {
+                var filename = isMask ? layer.MaskFile : layer.ImageFile;
+                if (filename is null) continue;
+                var asset = (isMask ? snapshot.Masks : snapshot.Images).GetValueOrDefault(layer.Id)
+                    ?? throw new ProjectException(ProjectError.MissingImage);
+                if (isMask && asset.Kind != PngPixelKind.Gray8) throw new ProjectException(ProjectError.Invalid);
+                if (!isMask && asset.Kind != PngPixelKind.Rgba8) throw new ProjectException(ProjectError.Invalid);
+                CheckSize(asset.Width, asset.Height, ref isMask ? ref maskPixels : ref pixels);
+                try
+                {
+                    encoded[filename] = PngCodec.Encode(asset.Width, asset.Height, asset.Kind, asset.Pixels);
+                }
+                catch (PngException)
+                {
+                    throw new ProjectException(ProjectError.Encode);
+                }
+            }
+        }
+
+        var options = new JsonSerializerOptions(Json) { WriteIndented = true };
+        var metadata = JsonSerializer.SerializeToUtf8Bytes(manifest, options);
+        if (metadata.Length > 4 * 1024 * 1024) throw new ProjectException(ProjectError.TooLarge);
+
+        var staging = path + ".tmp-save";
+        var backup = path + ".old-save";
+        if (Directory.Exists(staging)) Directory.Delete(staging, recursive: true);
+        if (Directory.Exists(backup)) Directory.Delete(backup, recursive: true);
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(staging, "images"));
+            File.WriteAllBytes(Path.Combine(staging, "manifest.json"), metadata);
+            foreach (var (filename, bytes) in encoded)
+                File.WriteAllBytes(Path.Combine(staging, "images", filename), bytes);
+
+            if (Directory.Exists(path)) Directory.Move(path, backup);
+            try
+            {
+                Directory.Move(staging, path);
+            }
+            catch
+            {
+                if (Directory.Exists(backup) && !Directory.Exists(path)) Directory.Move(backup, path);
+                throw;
+            }
+            if (Directory.Exists(backup)) Directory.Delete(backup, recursive: true);
+        }
+        finally
+        {
+            if (Directory.Exists(staging)) Directory.Delete(staging, recursive: true);
+        }
+    }
+
     private static ImportedImage ReadAsset(string file, string name, bool isMask, ref long pixels, ref long maskPixels)
     {
-        // Header-level decode (upstream checks CGImageSource properties: PNG, one frame,
-        // 8-bit). Full pixel decode is M1.2; the encoded bytes are kept for it.
-        var encoded = File.ReadAllBytes(file);
-        if (!TryReadPngHeader(encoded, out var width, out var height, out var bitDepth, out var colorType, out var interlace))
+        // Upstream reads CGImageSource properties first (dimensions, depth), runs the
+        // budget check, and only then creates the image — oversized files are rejected
+        // before any pixel work. The mask rule mirrors LayerMask.isValid.
+        byte[] encoded;
+        PngImage image;
+        try
+        {
+            encoded = File.ReadAllBytes(file);
+            if (!TryReadPngHeader(encoded, out var width, out var height, out var depth, out var color, out _))
+                throw new ProjectException(ProjectError.MissingImage);
+            if (depth > 8) throw new ProjectException(ProjectError.MissingImage);
+            if (isMask && (color != 0 || depth != 8)) throw new ProjectException(ProjectError.Invalid);
+            if (isMask) CheckSize(width, height, ref maskPixels); else CheckSize(width, height, ref pixels);
+            image = PngCodec.Decode(encoded, isMask ? PngPixelKind.Gray8 : PngPixelKind.Rgba8);
+        }
+        catch (ProjectException) { throw; }
+        catch (PngException)
+        {
             throw new ProjectException(ProjectError.MissingImage);
-        if (bitDepth > 8 || interlace != 0) throw new ProjectException(ProjectError.MissingImage);
-        if (isMask && !(colorType == 0 && bitDepth == 8)) throw new ProjectException(ProjectError.Invalid);
-        if (isMask) CheckSize(width, height, ref maskPixels); else CheckSize(width, height, ref pixels);
-        return new ImportedImage { Width = width, Height = height, Encoded = encoded, Name = name };
+        }
+        var thumbnail = isMask
+            ? GrayThumbnail(image.Width, image.Height, image.Pixels)
+            : PngCodec.Thumbnail(image.Width, image.Height, image.Pixels);
+        return new ImportedImage
+        {
+            Width = image.Width, Height = image.Height, Kind = image.Kind,
+            Pixels = image.Pixels, Thumbnail = thumbnail, Encoded = encoded, Name = name,
+        };
+    }
+
+    private static byte[] GrayThumbnail(int width, int height, byte[] gray)
+    {
+        var rgba = new byte[width * height * 4];
+        for (var i = 0; i < width * height; i++)
+        {
+            rgba[i * 4] = rgba[i * 4 + 1] = rgba[i * 4 + 2] = gray[i];
+            rgba[i * 4 + 3] = 255;
+        }
+        return PngCodec.Thumbnail(width, height, rgba);
     }
 
     internal static bool TryReadPngHeader(byte[] bytes, out int width, out int height,
