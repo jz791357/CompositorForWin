@@ -15,7 +15,7 @@ Milestones: M1 core editor · M2 selections/transform/type · M3 adjustments/eff
 |---|---|---|---|
 | `AdjustmentEditing.swift` | `src/Compositor/Document/AdjustmentEditing.cs` | M2 | planned |
 | `BlurTool.swift` | `src/Compositor/Document/BlurTool.cs` | M2 | planned |
-| `BrushStroke.swift` | `src/Compositor/Document/BrushStroke.cs` | M1 | planned |
+| `BrushStroke.swift` | `src/Compositor.Core/Rendering/BrushEngine.cs` | M1 | ✅ M1 简版（平滑/光标预览随 M2） |
 | `CameraRaw.swift` | `src/Compositor/Document/CameraRaw.cs` | M3 | planned |
 | `CameraRawColor.swift` | `src/Compositor/Document/CameraRawColor.cs` | M3 | planned |
 | `CameraRawDetailOptics.swift` | `src/Compositor/Document/CameraRawDetailOptics.cs` | M3 | planned |
@@ -29,16 +29,16 @@ Milestones: M1 core editor · M2 selections/transform/type · M3 adjustments/eff
 | `Curves.swift` | `src/Compositor/Document/Curves.cs` | M3 | planned |
 | `Distort.swift` | `src/Compositor/Document/Distort.cs` | M2 | planned |
 | `Dither.swift` | `src/Compositor/Document/Dither.cs` | M3 | planned |
-| `DocumentHistory.swift` | `src/Compositor/Document/DocumentHistory.cs` | M1 | planned |
+| `DocumentHistory.swift` | `src/Compositor.Core/Document/DocumentHistory.cs` | M1 | ✅ M1 |
 | `DocumentLimits.swift` | `src/Compositor.Core/Document/DocumentLimits.cs` | M1 | ✅ M1.1 (含内存预算跨平台实现) |
-| `EditorSession.swift` | `src/Compositor/Document/EditorSession.cs` | M1 | planned |
+| `EditorSession.swift` | `src/Compositor.Core/Document/EditorSession.cs` | M1 | ✅ M1 核心（会话态/笔画/拖拽；导入管线与工具头随 M2） |
 | `EditorSession+Brush.swift` | `src/Compositor/Document/EditorSession+Brush.cs` | M1 | planned |
 | `EditorSession+Projects.swift` | `src/Compositor/Document/EditorSession+Projects.cs` | M1 | planned |
 | `Filters.swift` | `src/Compositor/Document/Filters.cs` | M3 | planned |
 | `FloatingSelection.swift` | `src/Compositor/Document/FloatingSelection.cs` | M2 | planned |
 | `Gradient.swift` | `src/Compositor/Document/Gradient.cs` | M2 | planned |
 | `GuidedMatte.swift` | `src/Compositor/Document/GuidedMatte.cs` | M4 | planned |
-| `Guides.swift` | `src/Compositor.Core/Document/Guides.cs` | M1 | ✅ M1.1 持久化形状（标尺交互随 M1.4） |
+| `Guides.swift` | `src/Compositor.Core/Document/Guides.cs` | M1 | ✅ M1（标尺拖出/清除已接） |
 | `HueSaturation.swift` | `src/Compositor/Document/HueSaturation.cs` | M3 | planned |
 | `ImageAdjustments.swift` | `src/Compositor/Document/ImageAdjustments.cs` | M3 | planned |
 | `ImageTrim.swift` | `src/Compositor/Document/ImageTrim.cs` | M2 | planned |
@@ -83,7 +83,7 @@ Milestones: M1 core editor · M2 selections/transform/type · M3 adjustments/eff
 | `GPUNoise.swift` | `src/Compositor/Rendering/GPUNoise.cs` | M3 | planned |
 | `InlineTextEditor.swift` | `src/Compositor/Rendering/InlineTextEditor.cs` | M2 | planned |
 | `LayerEffectsSurface.swift` | `src/Compositor/Rendering/LayerEffectsSurface.cs` | M3 | planned |
-| `LayerRenderer.swift` | `src/Compositor/Rendering/LayerRenderer.cs` | M1 | planned |
+| `LayerRenderer.swift` | `src/Compositor.Core/Rendering/LayerRenderer.cs` | M1 | ✅ M1 CPU 参考实现（GPU 路径随 M2+） |
 | `LiveMaskRenderer.swift` | `src/Compositor/Rendering/LiveMaskRenderer.cs` | M4 | planned |
 | `MetalBrushCoverage.swift` | `src/Compositor/Rendering/MetalBrushCoverage.cs` | M3 | planned |
 | `MetalLayerEffects.swift` | `src/Compositor/Rendering/MetalLayerEffects.cs` | M3 | planned |
@@ -105,7 +105,7 @@ Milestones: M1 core editor · M2 selections/transform/type · M3 adjustments/eff
 | `CameraRawDetailOpticsControls.swift` | `src/Compositor/UI/CameraRawDetailOpticsControls.cs` | M3 | planned |
 | `CameraRawGeometryCalibrationControls.swift` | `src/Compositor/UI/CameraRawGeometryCalibrationControls.cs` | M3 | planned |
 | `CameraRawSlider.swift` | `src/Compositor/UI/CameraRawSlider.cs` | M3 | planned |
-| `CanvasRulers.swift` | `src/Compositor/UI/CanvasRulers.cs` | M1 | planned |
+| `CanvasRulers.swift` | `src/Compositor/Controls/CanvasView.cs` | M1 | ✅ M1 简版 |
 | `CanvasSizeSheet.swift` | `src/Compositor/UI/CanvasSizeSheet.cs` | M2 | planned |
 | `CanvasThumbnail.swift` | `src/Compositor/UI/CanvasThumbnail.cs` | M4 | planned |
 | `ColorPaletteControls.swift` | `src/Compositor/UI/ColorPaletteControls.cs` | M2 | planned |
@@ -127,15 +127,15 @@ Milestones: M1 core editor · M2 selections/transform/type · M3 adjustments/eff
 | `LassoControls.swift` | `src/Compositor/UI/LassoControls.cs` | M2 | planned |
 | `LayerAppearanceControls.swift` | `src/Compositor/UI/LayerAppearanceControls.cs` | M1-4 | planned |
 | `LayerMaskMenu.swift` | `src/Compositor/UI/LayerMaskMenu.cs` | M1-4 | planned |
-| `LayersPanel.swift` | `src/Compositor/UI/LayersPanel.cs` | M1 | planned |
+| `LayersPanel.swift` | `src/Compositor/Controls/LayersPanel.cs` | M1 | ✅ M1（缩略图随 M2） |
 | `LevelsSheet.swift` | `src/Compositor/UI/LevelsSheet.cs` | M3 | planned |
-| `NativeLayerList.swift` | `src/Compositor/UI/NativeLayerList.cs` | M1 | planned |
+| `NativeLayerList.swift` | `src/Compositor/Controls/LayersPanel.cs` | M1 | ✅ M1 简版 |
 | `NavigationToolHeader.swift` | `src/Compositor/UI/NavigationToolHeader.cs` | M1-4 | planned |
 | `NewCanvasSheet.swift` | `src/Compositor/UI/NewCanvasSheet.cs` | M1 | planned |
 | `NumericScrub.swift` | `src/Compositor/UI/NumericScrub.cs` | M1 | planned |
 | `PSDConversionSheet.swift` | `src/Compositor/UI/PSDConversionSheet.cs` | M4 | planned |
 | `ProjectTabLayout.swift` | `src/Compositor/UI/ProjectTabLayout.cs` | M4 | planned |
-| `ProjectTabs.swift` | `src/Compositor/UI/ProjectTabs.cs` | M1 | planned |
+| `ProjectTabs.swift` | `src/Compositor/MainWindow.xaml` | M1 | ✅ M1 单标签（多标签随 M2） |
 | `ProjectWindowBridge.swift` | `src/Compositor/UI/ProjectWindowBridge.cs` | M4 | planned |
 | `RawDevelopSheet.swift` | `src/Compositor/UI/RawDevelopSheet.cs` | M4 | planned |
 | `ShapeControls.swift` | `src/Compositor/UI/ShapeControls.cs` | M2 | planned |
@@ -151,17 +151,17 @@ Milestones: M1 core editor · M2 selections/transform/type · M3 adjustments/eff
 |---|---|---|---|
 | `CanvasResizer.swift` | `src/Compositor/IO/CanvasResizer.cs` | M1 | planned |
 | `CompositorApplicationDelegate.swift` | `src/Compositor/IO/CompositorApplicationDelegate.cs` | M1 | planned |
-| `ImageExporter.swift` | `src/Compositor/IO/ImageExporter.cs` | M1 | planned |
+| `ImageExporter.swift` | `src/Compositor/Editing/ProjectController.cs` | M1 | ✅ M1 PNG+JPEG（预览随 M3） |
 | `ImageFileDrop.swift` | `src/Compositor/IO/ImageFileDrop.cs` | M4 | planned |
-| `ImageImporter.swift` | `src/Compositor.Core/IO/ImageImporter.cs` | M1 | planned |
+| `ImageImporter.swift` | `src/Compositor/MainWindow.xaml.cs` (ImportLayerPixels) | M1 | ✅ M1 简版（RAW/HEIC 等随 M4） |
 | `ImageResizer.swift` | `src/Compositor/IO/ImageResizer.cs` | M2 | planned |
-| `ProjectController.swift` | `src/Compositor/IO/ProjectController.cs` | M1 | planned |
+| `ProjectController.swift` | `src/Compositor/Editing/ProjectController.cs` | M1 | ✅ M1（外部修改监视随 M2） |
 | `ProjectController+ExternalChanges.swift` | `src/Compositor/IO/ProjectController+ExternalChanges.cs` | M1-4 | planned |
 | `ProjectDigest.swift` | `src/Compositor.Core/IO/ProjectDigest.cs` | M1 | ✅ M1.1 |
 | `ProjectStore.swift` | `src/Compositor.Core/IO/ProjectStore.cs` + `ProjectManifest.cs` | M1 | ✅ M1.1 加载+校验（保存随 M1.2 编码器） |
 | `ProjectWatcher.swift` | `src/Compositor/IO/ProjectWatcher.cs` | M1 | planned |
 | `RawImporter.swift` | `src/Compositor/IO/RawImporter.cs` | M4 | planned |
-| `RecentProjects.swift` | `src/Compositor/IO/RecentProjects.cs` | M1 | planned |
+| `RecentProjects.swift` | `src/Compositor/Editing/ProjectController.cs` | M1 | ✅ M1（会话内；持久化随 M2） |
 
 ### Native C kernels (compiled verbatim)
 
