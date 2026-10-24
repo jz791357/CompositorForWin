@@ -11,7 +11,8 @@ namespace Compositor;
 public partial class App : Application
 {
     private static readonly string LogPath = Path.Combine(
-        Environment.GetFolderPath(Environment.LocalApplicationData), "Compositor", "startup.log");
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Compositor", "startup.log");
 
     public App()
     {
