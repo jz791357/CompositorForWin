@@ -32,6 +32,12 @@
     </AssemblyAttribute>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="portable-readme.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="start-diagnostics.bat" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="start-softwarerendering.bat" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <!-- The C pixel kernels live in Compositor.Native (msbuild/vcxproj, built separately
        or via the solution). Copy the DLL next to the app whenever it has been built. -->
   <ItemGroup>
