@@ -357,3 +357,108 @@ public class CompositorTests
         Assert.Equal(0, canvas[(1 * 2 + 1) * 4 + 3]);
     }
 }
+
+public class StrokeAndDragTests
+{
+    private static (EditorSession, Guid) PaintedSession()
+    {
+        var session = new EditorSession();
+        session.CreateDocument(64, 64);
+        session.AddBlankLayer();
+        return (session, session.ActiveLayerID!.Value);
+    }
+
+    [Fact]
+    public void StrokePaintsAndRecordsOneEntry()
+    {
+        var (session, id) = PaintedSession();
+        session.Brush = new(Red: 200, Green: 30, Blue: 90, Size: 8, Hardness: 1, Opacity: 1);
+        var before = session.History.UndoCount;
+        session.BeginStroke();
+        session.ExtendStroke(new(5, 5), new(5, 6));
+        session.EndStroke();
+        Assert.Equal(before + 1, session.History.UndoCount);
+        var layer = session.Document!.Layers.First(l => l.Id == id);
+        var center = (5 * 64 + 5) * 4;
+        Assert.Equal(200, layer.Pixels![center]);
+        Assert.Equal(255, layer.Pixels[center + 3]);
+    }
+
+    [Fact]
+    public void EraseLowersAlpha()
+    {
+        var (session, id) = PaintedSession();
+        var layer = session.Document!.Layers.First(l => l.Id == id);
+        Array.Fill(layer.Pixels!, (byte)255);
+        session.Brush = new(Size: 8, Hardness: 1, Opacity: 1, Erase: true);
+        session.BeginStroke();
+        session.ExtendStroke(new(5, 5), new(5, 6));
+        session.EndStroke();
+        Assert.Equal(0, layer.Pixels![(5 * 64 + 5) * 4 + 3]);
+    }
+
+    [Fact]
+    public void UntouchedStrokeLeavesNoHistory()
+    {
+        var (session, _) = PaintedSession();
+        var before = session.History.UndoCount;
+        session.BeginStroke();
+        session.EndStroke();
+        Assert.Equal(before, session.History.UndoCount);
+    }
+
+    [Fact]
+    public void StrokeUndoRestoresPixels()
+    {
+        var (session, id) = PaintedSession();
+        session.Brush = new(Red: 255, Size: 8, Hardness: 1, Opacity: 1);
+        session.BeginStroke();
+        session.ExtendStroke(new(5, 5), new(5, 6));
+        session.EndStroke();
+        session.Undo();
+        var layer = session.Document!.Layers.First(l => l.Id == id);
+        Assert.Equal(0, layer.Pixels![(5 * 64 + 5) * 4 + 3]);   // blank again
+    }
+
+    [Fact]
+    public void DragMovesLayerAndRecordsOnce()
+    {
+        var (session, id) = PaintedSession();
+        var before = session.History.UndoCount;
+        Assert.True(session.BeginLayerDrag(new(0, 0)));
+        session.DragLayerBy(10, 20);
+        session.DragLayerBy(15, 20);   // offsets from the drag start, not increments
+        session.EndLayerDrag();
+        Assert.Equal(before + 1, session.History.UndoCount);
+        var layer = session.Document!.Layers.First(l => l.Id == id);
+        Assert.Equal(15, layer.Transform.Origin.X);
+        Assert.Equal(20, layer.Transform.Origin.Y);
+        session.Undo();
+        layer = session.Document!.Layers.First(l => l.Id == id);
+        Assert.Equal(0, layer.Transform.Origin.X);
+    }
+
+    [Fact]
+    public void MaskPaintingCreatesAndEditsMask()
+    {
+        var (session, id) = PaintedSession();
+        session.SetStrokeTarget(StrokeTarget.LayerMask);
+        session.Brush = new(Size: 8, Hardness: 1, Opacity: 1);
+        session.BeginStroke();
+        session.ExtendStroke(new(5, 5), new(5, 6));
+        session.EndStroke();
+        var layer = session.Document!.Layers.First(l => l.Id == id);
+        Assert.NotNull(layer.Mask);
+        Assert.Equal(255, layer.Mask!.Gray[5 * 64 + 5]);       // white reveals where painted
+        Assert.Equal(0, layer.Mask.Gray[40 * 64 + 40]);        // untouched stays hidden
+    }
+
+    [Fact]
+    public void AddRevealingMaskShowsEverything()
+    {
+        var (session, id) = PaintedSession();
+        session.AddRevealingMask();
+        var layer = session.Document!.Layers.First(l => l.Id == id);
+        Assert.All(layer.Mask!.Gray, value => Assert.Equal(255, value));
+    }
+}

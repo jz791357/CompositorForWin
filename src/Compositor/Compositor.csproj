@@ -16,6 +16,12 @@
     <RootNamespace>Compositor</RootNamespace>
   </PropertyGroup>
 
+  <!-- Folder/color dialogs come from Windows Forms without its global usings, so WPF
+       type names stay unambiguous. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Compositor.Core\Compositor.Core.csproj" />
   </ItemGroup>

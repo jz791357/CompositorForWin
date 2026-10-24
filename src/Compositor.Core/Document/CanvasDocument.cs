@@ -34,7 +34,7 @@ public sealed class CanvasDocument
         Layers = Layers.Select(LayerCopy).ToList(),
     };
 
-    internal static ImageLayer LayerCopy(ImageLayer layer) => new()
+    public static ImageLayer LayerCopy(ImageLayer layer) => new()
     {
         Id = layer.Id,
         Name = layer.Name,
