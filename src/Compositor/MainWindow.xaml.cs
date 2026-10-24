@@ -29,6 +29,7 @@ public partial class MainWindow : Window
         EditorCanvas = new Controls.CanvasView(Session) { Focusable = true };
         CanvasHost.Child = EditorCanvas;
         LayersHost.Child = new Controls.LayersPanel(Session);
+        ToolMove.IsChecked = true;      // parse is done; the Checked handler is safe now
         SourceInitialized += (_, _) => EnableDarkTitleBar();
         Loaded += (_, _) =>
         {
@@ -81,7 +82,10 @@ public partial class MainWindow : Window
 
     private void ApplyBrushSettings()
     {
-        if (Session is null) return;
+        // Sliders fire ValueChanged while the XAML is still parsing (setting Minimum
+        // coerces Value), so sibling controls may not exist yet — guard those, not
+        // the session (whose field initializer always runs).
+        if (BrushSize is null || BrushHardness is null || BrushOpacity is null) return;
         Session.Brush = Session.Brush with
         {
             Size = (double)BrushSize.Value,
