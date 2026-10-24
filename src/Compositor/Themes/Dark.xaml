@@ -54,11 +54,28 @@
     </Style>
 
     <ControlTemplate x:Key="MenuItem.TopLevel" TargetType="MenuItem">
-        <Border x:Name="Root" Background="Transparent" Padding="8,4">
-            <ContentPresenter ContentSource="Header" VerticalAlignment="Center" RecognizesAccessKey="True" />
-        </Border>
+        <Grid>
+            <Border x:Name="Root" Background="Transparent" Padding="8,4">
+                <ContentPresenter ContentSource="Header" VerticalAlignment="Center" RecognizesAccessKey="True" />
+            </Border>
+            <!-- The submenu: without this popup the header opens nothing. -->
+            <Popup IsOpen="{TemplateBinding IsSubmenuOpen}" Placement="Bottom"
+                   PlacementTarget="{Binding ElementName=Root}" AllowsTransparency="True"
+                   Focusable="False" PopupAnimation="None">
+                <Border Background="{StaticResource Brush.Popup}" BorderBrush="{StaticResource Brush.Divider}"
+                        BorderThickness="1" Margin="0,2,8,8" Padding="4">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.5" />
+                    </Border.Effect>
+                    <ItemsPresenter />
+                </Border>
+            </Popup>
+        </Grid>
         <ControlTemplate.Triggers>
             <Trigger Property="IsHighlighted" Value="True">
+                <Setter TargetName="Root" Property="Background" Value="{StaticResource Brush.ControlHover}" />
+            </Trigger>
+            <Trigger Property="IsSubmenuOpen" Value="True">
                 <Setter TargetName="Root" Property="Background" Value="{StaticResource Brush.ControlHover}" />
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
