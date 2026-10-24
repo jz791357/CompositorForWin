@@ -95,18 +95,18 @@ jobs:
           name: Compositor-win-x64
           path: publish/
 
-      # A portable, self-contained zip for testing on any Windows 10+ machine or VM
+      # A portable, self-contained build for testing on any Windows 10+ machine or VM
       # (no runtime install needed). Not the distribution format — that stays the
       # ≤100 MB framework-dependent package defined in PORTING-PLAN §1.1.
+      # upload-artifact wraps the directory in its own zip, so no extra Compress-Archive.
       - name: Publish portable test build (self-contained)
         if: needs.changes.outputs.docs_only != 'true'
         run: |
           dotnet publish src/Compositor/Compositor.csproj -c Release -r win-x64 --self-contained true -o portable
           Copy-Item src/Compositor.Native/out/Compositor.Native.dll portable/
-          Compress-Archive -Path portable/* -DestinationPath Compositor-win-x64-portable.zip
 
       - uses: actions/upload-artifact@v4
         if: needs.changes.outputs.docs_only != 'true'
         with:
           name: Compositor-win-x64-portable
-          path: Compositor-win-x64-portable.zip
+          path: portable/
