@@ -92,7 +92,7 @@ public sealed class LayersPanel : UserControl
         blendRow.Children.Add(_blend);
         footer.Children.Add(blendRow);
 
-        var maskRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
+        var maskRow = new WrapPanel { Margin = new Thickness(0, 8, 0, 0) };
         foreach (var (label, tooltip, action) in new (string, string, Action)[]
         {
             ("Add Mask", "A white mask revealing the layer", () => _session.AddRevealingMask()),
@@ -101,13 +101,20 @@ public sealed class LayersPanel : UserControl
             ("Paint Mask", "Paint the mask instead of the pixels (white; Alt-click paints black)", ToggleMaskTarget),
         })
         {
-            var button = new Button { Content = label, ToolTip = tooltip, Margin = new Thickness(0, 0, 6, 0), Padding = new Thickness(8, 3, 8, 3) };
+            var button = new Button { Content = label, ToolTip = tooltip, Margin = new Thickness(0, 0, 6, 6), Padding = new Thickness(8, 3, 8, 3) };
             button.Click += (_, _) => action();
             maskRow.Children.Add(button);
         }
         footer.Children.Add(maskRow);
         DockPanel.SetDock(footer, Dock.Bottom);
-        _root.Children.Add(footer);
+        // Short windows: keep the footer reachable instead of clipped away.
+        var footerScroll = new ScrollViewer
+        {
+            Content = footer, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+        };
+        DockPanel.SetDock(footerScroll, Dock.Bottom);
+        _root.Children.Add(footerScroll);
     }
 
     private void ToggleMaskTarget()

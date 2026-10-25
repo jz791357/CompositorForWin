@@ -203,25 +203,48 @@ public sealed class CanvasView : FrameworkElement
         context.DrawText(text, new Point((RenderSize.Width - text.Width) / 2, (RenderSize.Height - text.Height) / 2));
     }
 
+    // The transparency checkerboard as a cached 16×16 tile brush — drawing thousands of
+    // little rectangles per frame made guide drags and pans stutter, especially under a
+    // VM's software renderer.
+    private static ImageBrush? _checkerTile;
+
     private static void DrawCheckerboard(DrawingContext context, Rect destination)
     {
-        var light = new SolidColorBrush(Color.FromRgb(0x48, 0x48, 0x48));
-        var dark = new SolidColorBrush(Color.FromRgb(0x3C, 0x3C, 0x3C));
-        const double cell = 8;
-        context.DrawRectangle(dark, null, destination);
-        if (destination.Width < 4096 && destination.Height < 4096)
+        if (_checkerTile is null)
         {
-            for (var y = 0; y * cell < destination.Height; y++)
-                for (var x = 0; x * cell < destination.Width; x++)
-                    if ((x + y) % 2 == 0)
-                        context.DrawRectangle(light, null,
-                            new Rect(destination.X + x * cell, destination.Y + y * cell, cell, cell));
+            var tile = new WriteableBitmap(16, 16, 96, 96, PixelFormats.Bgr32, null);
+            var pixels = new uint[16 * 16];
+            uint light = 0xFF484848, dark = 0xFF3C3C3C;   // BGR little-endian
+            for (var y = 0; y < 16; y++)
+                for (var x = 0; x < 16; x++)
+                    pixels[y * 16 + x] = (x / 8 + y / 8) % 2 == 0 ? light : dark;
+            tile.WritePixels(new Int32Rect(0, 0, 16, 16), pixels, 16 * 4, 0);
+            tile.Freeze();
+            _checkerTile = new ImageBrush(tile)
+            {
+                TileMode = TileMode.Tile,
+                Viewport = new Rect(0, 0, 16, 16),
+                ViewportUnits = BrushMappingMode.Absolute,
+            };
+            _checkerTile.Freeze();
         }
+        // Keep the pattern aligned with the canvas origin while it pans or zooms.
+        // (Brushes can't be re-frozen, but a value-copy with the frame's transform is
+        // cheap compared to drawing the tiles by hand.)
+        var aligned = _checkerTile.CloneCurrentValue();
+        aligned.Transform = new TranslateTransform(destination.X % 16, destination.Y % 16);
+        context.DrawRectangle(aligned, null, destination);
     }
 
     private void DrawPixelGrid(DrawingContext context, Rect destination)
     {
+        // Thousands of individual lines stutter in software rendering; the grid only
+        // matters close up, where few lines are on screen at once.
+        var visibleX = RenderSize.Width / _zoom;
+        var visibleY = RenderSize.Height / _zoom;
+        if (visibleX + visibleY > 1500) return;
         var pen = new Pen(new SolidColorBrush(Color.FromArgb(90, 0, 0, 0)), 1);
+        pen.Freeze();
         for (var x = 0; x <= _session.Document!.Width; x++)
         {
             var screen = destination.X + x * _zoom;
@@ -395,9 +418,8 @@ public sealed class CanvasView : FrameworkElement
             var document = ScreenToDocument(position);
             _session.ExtendStroke(previous, document);
             _lastDocumentPoint = document;
-            return;
         }
-        InvalidateVisual();   // brush cursor ring
+        // No cursor ring is drawn yet, so a plain hover needs no repaint.
     }
 
     protected override void OnMouseUp(MouseButtonEventArgs e)

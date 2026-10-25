@@ -62,30 +62,35 @@
             </MenuItem>
         </Menu>
 
-        <!-- Tool header (upstream NavigationToolHeader + BrushControls) -->
+        <!-- Tool header (upstream NavigationToolHeader + BrushControls); wraps onto a
+             second row on narrow windows instead of clipping off the right edge. -->
         <Border DockPanel.Dock="Top" Background="{StaticResource Brush.Chrome}"
                 BorderBrush="{StaticResource Brush.Divider}" BorderThickness="0,0,0,1" Padding="10,6">
-            <StackPanel Orientation="Horizontal">
-                <UniformGrid Rows="1" Columns="4" Margin="0,0,16,0">
-                    <RadioButton Name="ToolMove" Content="Move (V)" GroupName="tool" Checked="Tool_Checked" Margin="0,0,8,0"/>
-                    <RadioButton Name="ToolBrush" Content="Brush (B)" GroupName="tool" Checked="Tool_Checked" Margin="0,0,8,0"/>
-                    <RadioButton Name="ToolEraser" Content="Eraser (E)" GroupName="tool" Checked="Tool_Checked" Margin="0,0,8,0"/>
-                    <RadioButton Name="ToolPan" Content="Pan (H)" GroupName="tool" Checked="Tool_Checked"/>
-                </UniformGrid>
-                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="0,0,12,0"/>
+            <WrapPanel>
+                <WrapPanel.Resources>
+                    <Style TargetType="RadioButton">
+                        <Setter Property="Margin" Value="0,0,10,0"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                    </Style>
+                </WrapPanel.Resources>
+                <RadioButton Name="ToolMove" Content="Move (V)" GroupName="tool" Checked="Tool_Checked"/>
+                <RadioButton Name="ToolBrush" Content="Brush (B)" GroupName="tool" Checked="Tool_Checked"/>
+                <RadioButton Name="ToolEraser" Content="Eraser (E)" GroupName="tool" Checked="Tool_Checked"/>
+                <RadioButton Name="ToolPan" Content="Pan (H)" GroupName="tool" Checked="Tool_Checked" Margin="0,0,14,0"/>
+                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="0,1,12,1"/>
                 <TextBlock Text="Size " VerticalAlignment="Center" Foreground="{StaticResource Brush.TextSecondary}"/>
-                <Slider Name="BrushSize" Width="90" Minimum="1" Maximum="300" Value="24"
-                        ValueChanged="BrushSetting_Changed" VerticalAlignment="Center"/>
-                <TextBlock Text="  Hardness " VerticalAlignment="Center" Foreground="{StaticResource Brush.TextSecondary}"/>
-                <Slider Name="BrushHardness" Width="80" Minimum="0" Maximum="100" Value="80"
-                        ValueChanged="BrushSetting_Changed" VerticalAlignment="Center"/>
-                <TextBlock Text="  Opacity " VerticalAlignment="Center" Foreground="{StaticResource Brush.TextSecondary}"/>
-                <Slider Name="BrushOpacity" Width="80" Minimum="1" Maximum="100" Value="100"
-                        ValueChanged="BrushSetting_Changed" VerticalAlignment="Center"/>
-                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="12,0"/>
-                <Button Name="ForegroundSwatch" Width="26" Height="26" ToolTip="Foreground color"
+                <Slider Name="BrushSize" Width="70" Minimum="1" Maximum="300" Value="24"
+                        ValueChanged="BrushSetting_Changed" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="Hardness " VerticalAlignment="Center" Foreground="{StaticResource Brush.TextSecondary}"/>
+                <Slider Name="BrushHardness" Width="60" Minimum="0" Maximum="100" Value="80"
+                        ValueChanged="BrushSetting_Changed" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="Opacity " VerticalAlignment="Center" Foreground="{StaticResource Brush.TextSecondary}"/>
+                <Slider Name="BrushOpacity" Width="60" Minimum="1" Maximum="100" Value="100"
+                        ValueChanged="BrushSetting_Changed" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="0,1,12,1"/>
+                <Button Name="ForegroundSwatch" Width="24" Height="24" ToolTip="Foreground color"
                         Click="Foreground_Click"/>
-            </StackPanel>
+            </WrapPanel>
         </Border>
 
         <!-- Project tab strip -->
