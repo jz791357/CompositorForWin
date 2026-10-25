@@ -26,6 +26,12 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        // A VM or small screen can be narrower than the 1180×780 default; CenterScreen
+        // then leaves the window's sides off-display (the tool header's right end and
+        // the Layers panel vanish). Clamp to the work area before anything shows.
+        var work = SystemParameters.WorkArea;
+        if (Width > work.Width - 16) Width = Math.Max(MinWidth, work.Width - 16);
+        if (Height > work.Height - 16) Height = Math.Max(MinHeight, work.Height - 16);
         EditorCanvas = new Controls.CanvasView(Session) { Focusable = true };
         CanvasHost.Child = EditorCanvas;
         LayersHost.Child = new Controls.LayersPanel(Session);
