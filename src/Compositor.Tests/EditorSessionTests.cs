@@ -95,7 +95,7 @@ public class EditorSessionTests
         session.EndEdit();
         Assert.Equal("Layer Setup", session.History.UndoName);
         session.Undo();
-        Assert.Empty(session.Document!.Layers);
+        Assert.Single(session.Document!.Layers);   // the white Background layer remains
         session.Redo();
 
         var previous = session.Document;
@@ -133,7 +133,7 @@ public class EditorSessionTests
         Assert.Equal(empty, session.Document);   // gated: redo did not run
         session.ShowsImporter = false;
         session.Redo();
-        Assert.Single(session.Document!.Layers);
+        Assert.Equal(2, session.Document!.Layers.Count);   // background + the redone blank layer
     }
 
     [Fact]
@@ -460,5 +460,25 @@ public class StrokeAndDragTests
         session.AddRevealingMask();
         var layer = session.Document!.Layers.First(l => l.Id == id);
         Assert.All(layer.Mask!.Gray, value => Assert.Equal(255, value));
+    }
+}
+
+public class BackgroundLayerTests
+{
+    [Fact]
+    public void NewCanvasIsPaintableImmediately()
+    {
+        var session = new EditorSession();
+        session.CreateDocument(32, 32);
+        Assert.NotNull(session.ActiveLayerID);                 // background layer active
+        var background = session.Document!.Layers.Single();
+        Assert.Equal("Background", background.Name);
+        Assert.Equal(255, background.Pixels![3]);             // opaque white
+        // The brush lands on it without adding anything first.
+        session.Brush = new(Red: 90, Size: 4, Hardness: 1, Opacity: 1);
+        session.BeginStroke();
+        session.ExtendStroke(new(5, 5), new(5, 6));
+        session.EndStroke();
+        Assert.Equal(90, background.Pixels[(5 * 32 + 5) * 4]);
     }
 }

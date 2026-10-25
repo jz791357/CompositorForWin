@@ -78,7 +78,12 @@ public sealed partial class EditorSession
         Mutate("New Canvas", () =>
         {
             Document = new CanvasDocument { Id = Guid.NewGuid(), Width = width, Height = height, Resolution = resolution };
-            ActiveLayerID = null;
+            // Photoshop parity: a new canvas is paintable immediately — a white
+            // Background layer exists before anything else is added.
+            var background = ImageLayer.Blank(Guid.NewGuid(), width, height, "Background");
+            Array.Fill(background.Pixels!, (byte)255);   // opaque white
+            Document.Layers.Add(background);
+            ActiveLayerID = background.Id;
         });
 
     private string UntitledName()
@@ -363,7 +368,7 @@ public sealed partial class EditorSession
 }
 
 // Upstream EditorTool (M1 subset; selection and the rest arrive in M2).
-public enum Tool { Move, Brush, Eraser }
+public enum Tool { Move, Brush, Eraser, Hand }
 
 public sealed partial class EditorSession
 {

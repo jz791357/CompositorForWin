@@ -81,7 +81,7 @@ public partial class MainWindow : Window
         Session.Tool = ReferenceEquals(sender, ToolMove) ? Tool.Move
             : ReferenceEquals(sender, ToolBrush) ? Tool.Brush
             : ReferenceEquals(sender, ToolEraser) ? Tool.Eraser
-            : Tool.Move;
+            : Tool.Hand;
     }
 
     private void BrushSetting_Changed(object sender, RoutedPropertyChangedEventArgs<double> e) => ApplyBrushSettings();
@@ -121,6 +121,7 @@ public partial class MainWindow : Window
             Key.V => Tool.Move,
             Key.B => Tool.Brush,
             Key.E => Tool.Eraser,
+            Key.H => Tool.Hand,
             _ => (Tool?)null,
         };
         if (tool is { } next)
@@ -130,7 +131,8 @@ public partial class MainWindow : Window
             {
                 Tool.Move => ToolMove,
                 Tool.Brush => ToolBrush,
-                _ => ToolEraser,
+                Tool.Eraser => ToolEraser,
+                _ => ToolPan,
             }).IsChecked = true;
             e.Handled = true;
             return;
