@@ -28,6 +28,7 @@ public sealed class CanvasView : FrameworkElement
     private Vector _panStartOffset;
     private bool _draggingLayer;
     private Point _dragStart;
+    private bool _strokeInProgress;   // true between mouse-down and mouse-up of a paint stroke
     private readonly HashSet<CanvasGuide> _draggedGuides = [];
 
     private const double RulerSize = 20;
@@ -44,9 +45,17 @@ public sealed class CanvasView : FrameworkElement
         });
         Focusable = true;
         ClipToBounds = true;
-        Cursor = Cursors.Cross;
         Loaded += (_, _) => Keyboard.Focus(this);
     }
+
+    // Tool-dependent cursors, refreshed whenever the session changes.
+    private void UpdateCursor() =>
+        Cursor = _session.Tool switch
+        {
+            Tool.Hand => Cursors.Hand,
+            Tool.Move => Cursors.Arrow,
+            _ => Cursors.Cross,
+        };
 
     public double Zoom => _zoom;
 
@@ -83,6 +92,7 @@ public sealed class CanvasView : FrameworkElement
 
     private void RebuildAll()
     {
+        UpdateCursor();
         if (_session.Document is not { } document)
         {
             _basePixels = _activePixels = null;
@@ -101,7 +111,11 @@ public sealed class CanvasView : FrameworkElement
                 break;
             }
         }
-        _basePixels = RenderBase(document);
+        // While a stroke is flowing, everything below the active layer is unchanged —
+        // re-rendering it per mouse-move is what made painting stutter. Only the active
+        // layer re-rasterizes until the stroke ends.
+        if (!_strokeInProgress || _basePixels is null)
+            _basePixels = RenderBase(document);
         _composite = Combine(_basePixels, _activePixels, width, height);
     }
 
@@ -349,7 +363,7 @@ public sealed class CanvasView : FrameworkElement
                 return;
             }
         }
-        if (e.ChangedButton == MouseButton.Middle || Keyboard.IsKeyDown(Key.Space))
+        if (e.ChangedButton == MouseButton.Middle || Keyboard.IsKeyDown(Key.Space) || _session.Tool == Tool.Hand)
         {
             _panning = true;
             _panStart = position;
@@ -369,6 +383,7 @@ public sealed class CanvasView : FrameworkElement
             }
             else if (_session.Tool is Tool.Brush or Tool.Eraser)
             {
+                _strokeInProgress = true;
                 _lastDocumentPoint = document;
                 _session.BeginStroke();
                 _session.ExtendStroke(document, document);
@@ -447,6 +462,7 @@ public sealed class CanvasView : FrameworkElement
             _session.EndStroke();
             _lastDocumentPoint = null;
         }
+        _strokeInProgress = false;   // the next rebuild re-renders the base too
         _panning = false;
         if (IsMouseCaptured) ReleaseMouseCapture();
         e.Handled = true;
